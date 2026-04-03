@@ -1,4 +1,4 @@
-name: Deploy to VM
+name: Docker Deploy
 
 on:
   push:
@@ -8,7 +8,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to VM
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Aliyun
         uses: appleboy/ssh-action@master
         with:
           host: 47.94.200.20
@@ -16,6 +18,17 @@ jobs:
           password: Lyj123456..
           script: |
             cd /root
-            git clone https://github.com/hswuz/firestone.git
+            rm -rf firestone
+            git clone https://github.com/Dylanly1/firestone.git
             cd firestone
-            nohup go run main.go > app.log 2>&1 &
+            
+            docker stop myapp || true
+            docker rm myapp || true
+            
+            docker build -t myapp .
+            
+            docker run -d \
+              --name myapp \
+              --restart always \
+              -p 80:80 \
+              myapp
