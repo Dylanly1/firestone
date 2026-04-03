@@ -1,4 +1,4 @@
-name: Docker Deploy
+name: 企业级Docker自动部署
 
 on:
   push:
@@ -8,35 +8,35 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to Aliyun
+      - name: 连接服务器并自动部署
         uses: appleboy/ssh-action@master
         with:
           host: 47.94.200.20
           username: root
           password: Lyj123456..
           script: |
-            # 进入目录
             cd /root
-            
-            # 配置 git 代理（解决阿里云拉不到 GitHub）
-            git config --global url."https://github.com".insteadOf "git@github.com:"
-            git config --global http.sslVerify false
-            
-            # 下载代码（用 HTTPS）
+
+            # 配置Git加速（解决阿里云拉取GitHub超时）
+            git config --global http.https://github.com.proxy http://10.10.10.10:1080
+            git config --global https.https://github.com.proxy http://10.10.10.10:1080
+            git config --global url."https://".insteadOf git://
+
+            # 下载代码
             rm -rf firestone
             git clone https://github.com/Dylanly1/firestone.git
             cd firestone
-            
-            # 停止旧容器
+
+            # 停止旧服务
             docker stop myapp || true
             docker rm myapp || true
-            
+
             # 构建镜像
             docker build -t myapp .
-            
+
             # 启动容器
             docker run -d \
               --name myapp \
               --restart always \
-              -p 80:80 \
+              --net=host \
               myapp
