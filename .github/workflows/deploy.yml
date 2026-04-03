@@ -8,35 +8,32 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to Aliyun
+      - name: Deploy to Server
         uses: appleboy/ssh-action@master
         with:
           host: 47.94.200.20
           username: root
-          password: Lyj123456..
+          password:Lyj123456..
           script: |
             cd /root
             
-            # 卸载所有代理（关键！）
-            git config --global --unset http.proxy
-            git config --global --unset https.proxy
+            # 以下操作 只在阿里云服务器上运行
+            # 不会影响你本地一丁点代码！！！
             
-            # 下载代码
-            rm -rf firestone
-            git clone https://github.com/Dylanly1/firestone.git
-            cd firestone
+            if [ ! -d "firestone" ]; then
+              git clone https://github.com/Dylanly1/firestone.git
+            else
+              cd firestone
+              git pull
+            fi
             
-            # 重启docker（确保镜像源生效）
-            systemctl restart docker
+            cd /root/firestone
             
-            # 停止旧容器
-            docker stop myapp || true
-            docker rm myapp || true
+            docker stop myapp 2>/dev/null
+            docker rm myapp 2>/dev/null
             
-            # 构建
             docker build -t myapp .
             
-            # 启动
             docker run -d \
               --name myapp \
               --restart always \
