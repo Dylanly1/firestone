@@ -8,8 +8,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
       - name: Deploy to Aliyun
         uses: appleboy/ssh-action@master
         with:
@@ -17,16 +15,26 @@ jobs:
           username: root
           password: Lyj123456..
           script: |
+            # 进入目录
             cd /root
+            
+            # 配置 git 代理（解决阿里云拉不到 GitHub）
+            git config --global url."https://github.com".insteadOf "git@github.com:"
+            git config --global http.sslVerify false
+            
+            # 下载代码（用 HTTPS）
             rm -rf firestone
             git clone https://github.com/Dylanly1/firestone.git
             cd firestone
             
+            # 停止旧容器
             docker stop myapp || true
             docker rm myapp || true
             
+            # 构建镜像
             docker build -t myapp .
             
+            # 启动容器
             docker run -d \
               --name myapp \
               --restart always \
